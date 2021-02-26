@@ -1,21 +1,18 @@
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect
+from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render
 from .models import *
 from .forms import *
-from django.shortcuts import render, get_object_or_404
-
 from django.db.models import Sum
 from _decimal import Decimal
 
 
-from django.contrib import messages
-from django.contrib.auth import update_session_auth_hash
-from django.contrib.auth.forms import PasswordChangeForm
-from django.shortcuts import redirect
-
-
 now = timezone.now()
+
+
 def home(request):
-     return render(request, 'crm/home.html',
+   return render(request, 'crm/home.html',
                  {'crm': home})
 
 
@@ -44,22 +41,19 @@ def customer_edit(request, pk):
        form = CustomerForm(instance=customer)
    return render(request, 'crm/customer_edit.html', {'form': form})
 
+
 @login_required
 def customer_delete(request, pk):
    customer = get_object_or_404(Customer, pk=pk)
    customer.delete()
    return redirect('crm:customer_list')
 
+
 @login_required
 def service_list(request):
    services = Service.objects.filter(created_date__lte=timezone.now())
    return render(request, 'crm/service_list.html', {'services': services})
 
-@login_required
-def service_delete(request, pk):
-   service = get_object_or_404(Service, pk=pk)
-   service.delete()
-   return redirect('crm:service_list')
 
 @login_required
 def service_new(request):
@@ -76,6 +70,7 @@ def service_new(request):
        form = ServiceForm()
        # print("Else")
    return render(request, 'crm/service_new.html', {'form': form})
+
 
 @login_required
 def service_edit(request, pk):
@@ -94,6 +89,12 @@ def service_edit(request, pk):
        form = ServiceForm(instance=service)
    return render(request, 'crm/service_edit.html', {'form': form})
 
+
+@login_required
+def service_delete(request, pk):
+   service = get_object_or_404(Service, pk=pk)
+   service.delete()
+   return redirect('crm:service_list')
 
 
 @login_required
@@ -140,39 +141,29 @@ def product_edit(request, pk):
        form = ProductForm(instance=product)
    return render(request, 'crm/product_edit.html', {'form': form})
 
+
 @login_required
 def summary(request, pk):
     customer = get_object_or_404(Customer, pk=pk)
     customers = Customer.objects.filter(created_date__lte=timezone.now())
     services = Service.objects.filter(cust_name=pk)
     products = Product.objects.filter(cust_name=pk)
-    sum_service_charge = Service.objects.filter(cust_name=pk).aggregate(Sum('service_charge'))
-    if(sum_service_charge['service_charge__sum'] == None):
-        sum_service_charge['service_charge__sum'] =0
-    print(sum_service_charge)
-    sum_product_charge = Product.objects.filter(cust_name=pk).aggregate(Sum('charge'))
-    if (sum_product_charge['charge__sum'] == None):
-        sum_product_charge['charge__sum'] = 0
-    print(sum_product_charge)
-    return render(request, 'crm/summary.html', {'products': products,
-                                                'services': services,
-                                                'sum_service_charge': sum_service_charge,
-                                                'sum_product_charge': sum_product_charge,
-                                                'thecustomer':customer,
-                                                })
+    sum_service_charge = \
+        Service.objects.filter(cust_name=pk).aggregate(Sum('service_charge'))
+    sum_product_charge = \
+        Product.objects.filter(cust_name=pk).aggregate(Sum('charge'))
 
-#def change_password(request):
- #   if request.method == 'POST':
-  #      form = PasswordChangeForm(request.user, request.POST)
-   #     if form.is_valid():
-    #        user = form.save()
-     #       update_session_auth_hash(request, user)  # Important!
-      #      messages.success(request, 'Your password was successfully updated!')
-       #     return redirect('change_password')
-        #else:
-         #   messages.error(request, 'Please correct the error below.')
-    #else:
-     #   form = PasswordChangeForm(request.user)
-    #return render(request, 'registration/change_password.html', {
-     #   'form': form
-    #})
+    # if no product or service records exist for the customer,
+    # change the ‘None’ returned by the query to 0.00
+    sum = sum_product_charge.get("charge__sum")
+    if sum== None:
+        sum_product_charge = {'charge__sum' : Decimal('0')}
+    sum = sum_service_charge.get("service_charge__sum")
+    if sum== None:
+        sum_service_charge = {'service_charge__sum' : Decimal('0')}
+
+    return render(request, 'crm/summary.html', {'customer': customer,
+                              'products': products,
+                              'services': services,
+                              'sum_service_charge': sum_service_charge,
+                              'sum_product_charge': sum_product_charge,})

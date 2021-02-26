@@ -1,5 +1,4 @@
 from django.contrib import admin
-
 from .models import Customer, Service, Product
 
 
@@ -16,6 +15,7 @@ class ServiceList(admin.ModelAdmin):
     search_fields = ('cust_name', )
     ordering = ['cust_name']
 
+
 class ProductList(admin.ModelAdmin):
     list_display = ( 'cust_name', 'product', 'pickup_time')
     list_filter = ( 'cust_name', 'pickup_time')
@@ -26,3 +26,5 @@ class ProductList(admin.ModelAdmin):
 admin.site.register(Customer, CustomerList)
 admin.site.register(Service, ServiceList)
 admin.site.register(Product, ProductList)
+
+

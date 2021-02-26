@@ -23,3 +23,4 @@ urlpatterns = [
     path('', include('crm.urls')),
     path('accounts/', include('django.contrib.auth.urls')),
 ]
+

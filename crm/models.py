@@ -1,5 +1,5 @@
-from django.db import models
 from django.utils import timezone
+from django.db import models
 
 
 # Create your models here.
@@ -48,13 +48,13 @@ class Service(models.Model):
     def created(self):
         self.created_date = timezone.now()
         self.save()
-
     def updated(self):
         self.updated_date = timezone.now()
         self.save()
 
     def __str__(self):
         return str(self.cust_name)
+
 
 class Product(models.Model):
     cust_name = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='products')
